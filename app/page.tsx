@@ -1,5 +1,6 @@
 "use client";
 
+import axios from "axios";
 import { useEffect, useMemo, useState } from "react";
 
 export default function Home() {
@@ -7,6 +8,8 @@ export default function Home() {
 
     const audioChunks = useMemo(() => [] as Blob[], []);
     const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+    const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+    const [queryText, setQueryText] = useState<string>("");
 
     useEffect(() => {
         (async () => {
@@ -15,12 +18,17 @@ export default function Home() {
 
             mediaRecorder.ondataavailable = function (event) {
                 audioChunks.push(event.data);
-                console.log(audioChunks);
             };
 
             setMediaRecorder(mediaRecorder);
         })();
     }, [audioChunks]);
+
+    useEffect(() => {
+        if (!audioBlob) return;
+
+        transcribeAudio();
+    }, [audioBlob]);
 
     const startRecording = async () => {
         if (!mediaRecorder || isRecording) return;
@@ -36,6 +44,8 @@ export default function Home() {
 
         mediaRecorder.onstop = () => {
             const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+            setAudioBlob(audioBlob);
+
             const audioUrl = URL.createObjectURL(audioBlob);
 
             const playerRef = document.getElementById("player") as HTMLAudioElement;
@@ -49,6 +59,21 @@ export default function Home() {
         mediaRecorder.stop();
     };
 
+    const transcribeAudio = async () => {
+        if (!audioBlob) return;
+
+        const formData = new FormData();
+        formData.append("audio", audioBlob, "audio.webm");
+
+        const { data } = await axios.post("/api/transcribe", formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
+
+        setQueryText(data.text);
+    };
+
     return (
         <main className="">
             <h1>Leoline</h1>
@@ -59,6 +84,9 @@ export default function Home() {
             </div>
             <div>
                 <audio id="player" controls></audio>
+            </div>
+            <div>
+                <p>{queryText}</p>
             </div>
         </main>
     );
