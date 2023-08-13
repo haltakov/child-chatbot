@@ -16,7 +16,7 @@ export default function Home() {
     useEffect(() => {
         (async () => {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+            const mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/mp4" });
 
             mediaRecorder.ondataavailable = function (event) {
                 audioChunks.push(event.data);
@@ -46,7 +46,7 @@ export default function Home() {
             formData.append("key", "2d1951beb76d44cebbdb5b379fdf6cde");
             formData.append("src", answerText);
             formData.append("hl", "bg-bg");
-            formData.append("c", "OGG");
+            formData.append("c", "WAV");
             const response = await axios.post("https://api.voicerss.org/", formData, {
                 headers: {
                     "Content-Type": "multipart/form-data",
@@ -54,7 +54,7 @@ export default function Home() {
                 responseType: "arraybuffer",
             });
 
-            const blob = new Blob([response.data], { type: "audio/ogg" });
+            const blob = new Blob([response.data], { type: "audio/wav" });
             const audioUrl = URL.createObjectURL(blob);
 
             const playerRef = document.getElementById("player2") as HTMLAudioElement;
@@ -80,7 +80,7 @@ export default function Home() {
         if (!mediaRecorder || !isRecording) return;
 
         mediaRecorder.onstop = () => {
-            const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+            const audioBlob = new Blob(audioChunks, { type: "audio/mp4" });
             setAudioBlob(audioBlob);
 
             const audioUrl = URL.createObjectURL(audioBlob);
@@ -100,7 +100,7 @@ export default function Home() {
         if (!audioBlob) return;
 
         const formData = new FormData();
-        formData.append("audio", audioBlob, "audio.webm");
+        formData.append("audio", audioBlob, "audio.mp4");
 
         const { data } = await axios.post("/api/transcribe", formData, {
             headers: {
