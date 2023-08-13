@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 
 export default function Home() {
     const [isRecording, setIsRecording] = useState(false);
-    const [isAdminView, setIsAdminView] = useState(true);
+    const [isAdminView, setIsAdminView] = useState(false);
 
     const audioChunks = useMemo(() => [] as Blob[], []);
     const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
