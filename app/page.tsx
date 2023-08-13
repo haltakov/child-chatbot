@@ -9,7 +9,8 @@ export default function Home() {
     const audioChunks = useMemo(() => [] as Blob[], []);
     const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
     const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
-    const [queryText, setQueryText] = useState<string>("");
+    const [queryText, setQueryText] = useState<string>("Здравей, как си днес?");
+    const [answerText, setAnswerText] = useState<string>("");
 
     useEffect(() => {
         (async () => {
@@ -29,6 +30,12 @@ export default function Home() {
 
         transcribeAudio();
     }, [audioBlob]);
+
+    useEffect(() => {
+        if (!queryText) return;
+
+        answerQuestion();
+    }, [queryText]);
 
     const startRecording = async () => {
         if (!mediaRecorder || isRecording) return;
@@ -74,6 +81,14 @@ export default function Home() {
         setQueryText(data.text);
     };
 
+    const answerQuestion = async () => {
+        const { data } = await axios.post("/api/answer", {
+            question: queryText,
+        });
+
+        setAnswerText(data.answer);
+    };
+
     return (
         <main className="">
             <h1>Leoline</h1>
@@ -87,6 +102,9 @@ export default function Home() {
             </div>
             <div>
                 <p>{queryText}</p>
+            </div>
+            <div>
+                <p>{answerText}</p>
             </div>
         </main>
     );
