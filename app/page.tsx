@@ -9,7 +9,7 @@ export default function Home() {
     const audioChunks = useMemo(() => [] as Blob[], []);
     const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
     const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
-    const [queryText, setQueryText] = useState<string>("Здравей, как си днес?");
+    const [queryText, setQueryText] = useState<string>("");
     const [answerText, setAnswerText] = useState<string>("");
 
     useEffect(() => {
@@ -36,6 +36,35 @@ export default function Home() {
 
         answerQuestion();
     }, [queryText]);
+
+    useEffect(() => {
+        (async () => {
+            if (!answerText) return;
+
+            const formData = new FormData();
+            formData.append("key", "2d1951beb76d44cebbdb5b379fdf6cde");
+            formData.append("src", answerText);
+            formData.append("hl", "bg-bg");
+            formData.append("c", "OGG");
+            const response = await axios.post("https://api.voicerss.org/", formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+                responseType: "arraybuffer",
+            });
+
+            const blob = new Blob([response.data], { type: "audio/ogg" });
+            const audioUrl = URL.createObjectURL(blob);
+
+            const playerRef = document.getElementById("player2") as HTMLAudioElement;
+            if (playerRef) {
+                playerRef.src = audioUrl;
+                playerRef.play();
+            }
+
+            console.log(response);
+        })();
+    }, [answerText]);
 
     const startRecording = async () => {
         if (!mediaRecorder || isRecording) return;
@@ -105,6 +134,9 @@ export default function Home() {
             </div>
             <div>
                 <p>{answerText}</p>
+            </div>
+            <div>
+                <audio id="player2" controls></audio>
             </div>
         </main>
     );
