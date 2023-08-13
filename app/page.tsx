@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 
 export default function Home() {
     const [isRecording, setIsRecording] = useState(false);
+    const [isAdminView, setIsAdminView] = useState(true);
 
     const audioChunks = useMemo(() => [] as Blob[], []);
     const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
@@ -119,25 +120,48 @@ export default function Home() {
     };
 
     return (
-        <main className="">
-            <h1>Leoline</h1>
+        <main className="bg-cover h-screen bg-center" style={{ backgroundImage: "url('img/leoline.png')" }}>
+            <button className="absolute top-1 right-1 text-xs text-white" onClick={() => setIsAdminView(!isAdminView)}>
+                A
+            </button>
+
             <div>
-                <button disabled={!mediaRecorder} onClick={() => (isRecording ? stopRecording() : startRecording())}>
-                    {isRecording ? "Stop" : "Record"}
-                </button>
+                <audio id="player2" controls className={!isAdminView ? "hidden" : ""}></audio>
             </div>
+
             <div>
-                <audio id="player" controls></audio>
+                <audio id="player" controls className={!isAdminView ? "hidden" : ""}></audio>
             </div>
-            <div>
-                <p>{queryText}</p>
-            </div>
-            <div>
-                <p>{answerText}</p>
-            </div>
-            <div>
-                <audio id="player2" controls></audio>
-            </div>
+
+            {isAdminView ? (
+                <div className="space-y-4 bg-white bg-opacity-50 p-4">
+                    <div>
+                        <button
+                            disabled={!mediaRecorder}
+                            onClick={() => (isRecording ? stopRecording() : startRecording())}
+                        >
+                            {isRecording ? "Stop" : "Record"}
+                        </button>
+                    </div>
+
+                    <div>
+                        <p>{queryText}</p>
+                    </div>
+                    <div>
+                        <p>{answerText}</p>
+                    </div>
+                </div>
+            ) : (
+                <>
+                    <button
+                        className="bg-red-600 h-24 w-24 absolute bottom-4 right-4 rounded-full"
+                        disabled={!mediaRecorder}
+                        onClick={() => (isRecording ? stopRecording() : startRecording())}
+                    >
+                        {isRecording ? "..." : "."}
+                    </button>
+                </>
+            )}
         </main>
     );
 }
