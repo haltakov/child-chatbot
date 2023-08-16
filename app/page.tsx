@@ -4,6 +4,7 @@ import useAnswer from "@/hooks/useAnswer";
 import useRecording from "@/hooks/useRecording";
 import useSpeech from "@/hooks/useSpeech";
 import useTranscription from "@/hooks/useTranscription";
+import clsx from "clsx";
 import { useEffect, useRef, useState } from "react";
 
 const Home = () => {
@@ -66,11 +67,14 @@ const Home = () => {
             )}
 
             <button
-                className="bg-red-600 h-24 w-24 absolute bottom-4 right-4 rounded-full"
+                className={clsx(
+                    "bg-red-600 h-24 w-24 absolute bottom-4 right-4 rounded-full",
+                    isRecording && "animate-pulse"
+                )}
                 disabled={!isRecordingReady}
                 onClick={handleRecording}
             >
-                {isRecording ? "..." : "."}
+                &nbsp;
             </button>
         </main>
     );
