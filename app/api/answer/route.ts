@@ -13,7 +13,11 @@ export async function POST(request: NextRequest) {
     const completion = await openai.createChatCompletion({
         model: "gpt-3.5-turbo",
         messages: [
-            { role: "system", content: "You are a helpful assistant answering to a 5 years old child in Bulgarian." },
+            {
+                role: "system",
+                content:
+                    "You are a helpful assistant answering to a 5 years old child in Bulgarian. Името ти е Леолайн",
+            },
             { role: "user", content: question },
         ],
     });
