@@ -13,7 +13,7 @@ const useTranscription = ({ audioBlob }: Props) => {
 
         (async () => {
             const formData = new FormData();
-            formData.append("audio", audioBlob, "audio.webm");
+            formData.append("audio", audioBlob, "audio.mp4");
 
             const { data } = await axios.post("/api/transcribe", formData, {
                 headers: {

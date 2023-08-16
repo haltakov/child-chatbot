@@ -22,16 +22,22 @@ export async function POST(request: NextRequest) {
             const stream = Readable.from(buffer);
             (stream as any).path = filename;
 
-            const response = await openai.createTranscription(
-                stream as any,
-                "whisper-1",
-                undefined,
-                "json",
-                undefined,
-                "bg"
-            );
+            let response;
+            try {
+                response = await openai.createTranscription(
+                    stream as any,
+                    "whisper-1",
+                    undefined,
+                    "json",
+                    undefined,
+                    "bg"
+                );
 
-            return NextResponse.json(response.data, { status: 200 });
+                return NextResponse.json(response.data, { status: 200 });
+            } catch (error) {
+                console.log("TRANSCRIBE ERROR:", error, response?.data);
+                return NextResponse.json({ message: "Cannot transcribe audio" }, { status: 400 });
+            }
         }
     }
 

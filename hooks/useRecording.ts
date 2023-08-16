@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+const getSupportedMediaType = () => {
+    if (MediaRecorder.isTypeSupported("audio/webm")) return "audio/webm";
+    else if (MediaRecorder.isTypeSupported("audio/mp4")) return "audio/mp4";
+    else if (MediaRecorder.isTypeSupported("audio/wav")) return "audio/wav";
+    else throw new Error("This device doesn't support recording ");
+};
+
 const useRecording = () => {
     const audioChunks = useMemo(() => [] as Blob[], []);
 
@@ -20,7 +27,7 @@ const useRecording = () => {
         if (!mediaRecorder || !isRecording) return;
 
         mediaRecorder.onstop = () => {
-            const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+            const audioBlob = new Blob(audioChunks, { type: getSupportedMediaType() });
             setAudioBlob(audioBlob);
 
             setIsRecording(false);
@@ -32,7 +39,7 @@ const useRecording = () => {
     useEffect(() => {
         (async () => {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+            const mediaRecorder = new MediaRecorder(stream, { mimeType: getSupportedMediaType() });
 
             mediaRecorder.ondataavailable = function (event) {
                 audioChunks.push(event.data);
