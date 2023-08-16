@@ -16,13 +16,11 @@ export async function POST(request: NextRequest) {
             {
                 role: "system",
                 content:
-                    "You are a helpful assistant answering to a 5 years old child in Bulgarian. Името ти е Леолайн",
+                    "You are a helpful assistant answering to a 5 years old child in Bulgarian. Твоето име е Леолайн",
             },
             { role: "user", content: question },
         ],
     });
-
-    console.log({ completion });
 
     return NextResponse.json({ answer: completion.data.choices[0].message?.content });
 }

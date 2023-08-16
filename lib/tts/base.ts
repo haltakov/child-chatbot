@@ -5,7 +5,7 @@ export class BaseTTSService {
         this.language = language;
     }
 
-    async speak(text: string): Promise<string> {
+    async speak(text: string): Promise<ArrayBuffer> {
         throw new Error("Not implemented");
     }
 }

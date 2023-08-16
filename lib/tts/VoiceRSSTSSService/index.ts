@@ -17,7 +17,7 @@ export class VoiceRSSTSSService extends BaseTTSService {
         }
     }
 
-    async speak(text: string): Promise<string> {
+    async speak(text: string): Promise<ArrayBuffer> {
         const formData = new FormData();
         formData.append("key", "2d1951beb76d44cebbdb5b379fdf6cde");
         formData.append("src", text);
@@ -30,7 +30,9 @@ export class VoiceRSSTSSService extends BaseTTSService {
             responseType: "arraybuffer",
         });
 
-        const blob = new Blob([response.data], { type: "audio/wav" });
-        return URL.createObjectURL(blob);
+        return response.data;
+
+        // const blob = new Blob([response.data], { type: "audio/wav" });
+        // return URL.createObjectURL(blob);
     }
 }

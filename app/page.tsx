@@ -1,16 +1,11 @@
 "use client";
 
-import { getTTS } from "../lib/tts";
 import axios from "axios";
 import { useEffect, useMemo, useState } from "react";
 
 export default function Home() {
     const [isRecording, setIsRecording] = useState(false);
     const [isAdminView, setIsAdminView] = useState(false);
-
-    const ttsService = useMemo(() => {
-        return getTTS({ language: "bg" });
-    }, []);
 
     const audioChunks = useMemo(() => [] as Blob[], []);
     const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
@@ -47,7 +42,18 @@ export default function Home() {
         (async () => {
             if (!answerText) return;
 
-            const audioUrl = await ttsService.speak(answerText);
+            const { data } = await axios.post(
+                "/api/speak",
+                {
+                    text: answerText,
+                },
+                {
+                    responseType: "arraybuffer",
+                }
+            );
+
+            const blob = new Blob([data], { type: "audio/wav" });
+            const audioUrl = URL.createObjectURL(blob);
 
             const playerRef = document.getElementById("player2") as HTMLAudioElement;
             if (playerRef) {
@@ -55,7 +61,7 @@ export default function Home() {
                 playerRef.play();
             }
         })();
-    }, [answerText, ttsService]);
+    }, [answerText]);
 
     const startRecording = async () => {
         if (!mediaRecorder || isRecording) return;
