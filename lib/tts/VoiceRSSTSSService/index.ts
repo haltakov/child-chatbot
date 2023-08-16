@@ -19,7 +19,7 @@ export class VoiceRSSTSSService extends BaseTTSService {
 
     async speak(text: string): Promise<ArrayBuffer> {
         const formData = new FormData();
-        formData.append("key", "2d1951beb76d44cebbdb5b379fdf6cde");
+        formData.append("key", process.env.VOICERSS_API_KEY || "");
         formData.append("src", text);
         formData.append("hl", this.hl);
         formData.append("c", "WAV");
