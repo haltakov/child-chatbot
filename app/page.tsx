@@ -1,119 +1,43 @@
 "use client";
 
-import axios from "axios";
-import { useEffect, useMemo, useState } from "react";
+import useAnswer from "@/hooks/useAnswer";
+import useRecording from "@/hooks/useRecording";
+import useSpeech from "@/hooks/useSpeech";
+import useTranscription from "@/hooks/useTranscription";
+import { useEffect, useRef, useState } from "react";
 
-export default function Home() {
-    const [isRecording, setIsRecording] = useState(false);
+const Home = () => {
     const [isAdminView, setIsAdminView] = useState(false);
 
-    const audioChunks = useMemo(() => [] as Blob[], []);
-    const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
-    const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
-    const [queryText, setQueryText] = useState<string>("");
-    const [answerText, setAnswerText] = useState<string>("");
+    const speechPlayerRef = useRef<HTMLAudioElement>(null);
 
-    useEffect(() => {
-        (async () => {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+    const { isRecording, audioBlob, startRecording, stopRecording, isRecordingReady } = useRecording();
+    const { questionText } = useTranscription({ audioBlob });
+    const { answerText } = useAnswer({ questionText });
+    const { speechUrl } = useSpeech({ text: answerText });
 
-            mediaRecorder.ondataavailable = function (event) {
-                audioChunks.push(event.data);
-            };
+    const handleRecording = () => {
+        // Play an empty sound on the first button press to circumvent iOS limitations
+        if (!speechUrl) {
+            speechPlayerRef.current?.play();
+        }
 
-            setMediaRecorder(mediaRecorder);
-        })();
-    }, [audioChunks]);
-
-    useEffect(() => {
-        if (!audioBlob) return;
-
-        transcribeAudio();
-    }, [audioBlob]);
-
-    useEffect(() => {
-        if (!queryText) return;
-
-        answerQuestion();
-    }, [queryText]);
-
-    useEffect(() => {
-        (async () => {
-            if (!answerText) return;
-
-            const { data } = await axios.post(
-                "/api/speak",
-                {
-                    text: answerText,
-                },
-                {
-                    responseType: "arraybuffer",
-                }
-            );
-
-            const blob = new Blob([data], { type: "audio/wav" });
-            const audioUrl = URL.createObjectURL(blob);
-
-            const playerRef = document.getElementById("player2") as HTMLAudioElement;
-            if (playerRef) {
-                playerRef.src = audioUrl;
-                playerRef.play();
-            }
-        })();
-    }, [answerText]);
-
-    const startRecording = async () => {
-        if (!mediaRecorder || isRecording) return;
-
-        setIsRecording(true);
-
-        audioChunks.splice(0, audioChunks.length);
-        mediaRecorder.start();
+        if (isRecording) {
+            stopRecording();
+        } else {
+            startRecording();
+        }
     };
 
-    const stopRecording = async () => {
-        if (!mediaRecorder || !isRecording) return;
+    // Play the synthesized speech
+    useEffect(() => {
+        if (!speechUrl) return;
 
-        mediaRecorder.onstop = () => {
-            const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
-            setAudioBlob(audioBlob);
-
-            const audioUrl = URL.createObjectURL(audioBlob);
-
-            const playerRef = document.getElementById("player") as HTMLAudioElement;
-            if (playerRef) {
-                playerRef.src = audioUrl;
-            }
-
-            setIsRecording(false);
-        };
-
-        mediaRecorder.stop();
-    };
-
-    const transcribeAudio = async () => {
-        if (!audioBlob) return;
-
-        const formData = new FormData();
-        formData.append("audio", audioBlob, "audio.webm");
-
-        const { data } = await axios.post("/api/transcribe", formData, {
-            headers: {
-                "Content-Type": "multipart/form-data",
-            },
-        });
-
-        setQueryText(data.text);
-    };
-
-    const answerQuestion = async () => {
-        const { data } = await axios.post("/api/answer", {
-            question: queryText,
-        });
-
-        setAnswerText(data.answer);
-    };
+        if (speechPlayerRef.current) {
+            speechPlayerRef.current.src = speechUrl;
+            speechPlayerRef.current.play();
+        }
+    }, [speechUrl]);
 
     return (
         <main className="bg-cover h-screen bg-center" style={{ backgroundImage: "url('img/leoline.png')" }}>
@@ -122,42 +46,34 @@ export default function Home() {
             </button>
 
             <div>
-                <audio id="player2" controls className={!isAdminView ? "hidden" : ""}></audio>
+                <audio
+                    ref={speechPlayerRef}
+                    controls
+                    className={!isAdminView ? "hidden" : ""}
+                    src="data:audio/mpeg;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAA1N3aXRjaCBQbHVzIMKpIE5DSCBTb2Z0d2FyZQBUSVQyAAAABgAAAzIyMzUAVFNTRQAAAA8AAANMYXZmNTcuODMuMTAwAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV"
+                ></audio>
             </div>
 
-            <div>
-                <audio id="player" controls className={!isAdminView ? "hidden" : ""}></audio>
-            </div>
-
-            {isAdminView ? (
+            {isAdminView && (
                 <div className="space-y-4 bg-white bg-opacity-50 p-4">
                     <div>
-                        <button
-                            disabled={!mediaRecorder}
-                            onClick={() => (isRecording ? stopRecording() : startRecording())}
-                        >
-                            {isRecording ? "Stop" : "Record"}
-                        </button>
-                    </div>
-
-                    <div>
-                        <p>{queryText}</p>
+                        <p>{questionText}</p>
                     </div>
                     <div>
                         <p>{answerText}</p>
                     </div>
                 </div>
-            ) : (
-                <>
-                    <button
-                        className="bg-red-600 h-24 w-24 absolute bottom-4 right-4 rounded-full"
-                        disabled={!mediaRecorder}
-                        onClick={() => (isRecording ? stopRecording() : startRecording())}
-                    >
-                        {isRecording ? "..." : "."}
-                    </button>
-                </>
             )}
+
+            <button
+                className="bg-red-600 h-24 w-24 absolute bottom-4 right-4 rounded-full"
+                disabled={!isRecordingReady}
+                onClick={handleRecording}
+            >
+                {isRecording ? "..." : "."}
+            </button>
         </main>
     );
-}
+};
+
+export default Home;
